@@ -47,33 +47,39 @@ else:
 # Ask which search algorithm to use (DFS or BFS)
 algorithm_choice = input("1. Depth-First Search (DFS) 2. Breadth-First Search (BFS): ")
 
-# Function for Depth-First Search (DFS)
-def depth_first_search(graph, start, visited=None):
-    if visited is None:
-        visited = set()
+# Function for Depth-First Search (DFS) - Handles disjointed regions
+def depth_first_search(graph, start):
+    visited = set()
 
-    visited.add(start)
-    print(start, end=" ")  # Process the current node (e.g., print it)
+    def dfs(node):
+        visited.add(node)
+        print(node, end=" ")
+        for neighbor in graph[node]:
+            if neighbor not in visited:
+                dfs(neighbor)
 
-    for neighbor in graph[start]:
-        if neighbor not in visited:
-            depth_first_search(graph, neighbor, visited)
+    # Ensure all disconnected components are searched
+    for node in graph.nodes:
+        if node not in visited:
+            dfs(node)
 
-# Function for Breadth-First Search (BFS)
+# Function for Breadth-First Search (BFS) - Handles disjointed regions
 def breadth_first_search(graph, start):
     visited = set()
-    queue = deque([start])  # Queue to hold nodes to explore
-    
-    while queue:
-        node = queue.popleft()
+
+    def bfs(start_node):
+        queue = deque([start_node])
+        while queue:
+            node = queue.popleft()
+            if node not in visited:
+                visited.add(node)
+                print(node, end=" ")
+                queue.extend(neighbor for neighbor in graph[node] if neighbor not in visited)
+
+    # Ensure all disconnected components are searched
+    for node in graph.nodes:
         if node not in visited:
-            visited.add(node)
-            print(node, end=" ")  # Process the current node (e.g., print it)
-            
-            # Add all unvisited neighbors to the queue
-            for neighbor in graph[node]:
-                if neighbor not in visited:
-                    queue.append(neighbor)
+            bfs(node)
 
 # Function to check if a path exists using DFS
 def dfs_path_exists(graph, start, target, visited=None):
@@ -138,4 +144,4 @@ plt.figure(figsize=(6, 6))
 nx.draw(G, pos, with_labels=True, node_color='lightblue', edge_color='gray', node_size=2000, font_size=12)
 plt.show(block=False)
 
-plt.pause(10)
+plt.pause(10)   
