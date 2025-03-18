@@ -7,7 +7,7 @@ from collections import deque  # For BFS
 G = nx.Graph()
 
 # Add nodes
-nodes = set(["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"])
+nodes = sorted(["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"])  # Sorted order
 G.add_nodes_from(nodes)
 
 # Define the edges, including the newly added (K, L)
@@ -27,44 +27,66 @@ pos = {
     "M": (0, 0), "N": (1, 0), "O": (2, 0), "P": (3, 0)
 }
 
-# Ask user which search algorithm to use and start node
+# Ask user for starting node
 choice = input("1. Random vertex 2. Specific vertex: ")
 if choice == '1':
-    # Select a random node to start DFS/BFS
-    start_node = random.choice(list(G.nodes))
+    start_node = random.choice(nodes)
     print(f"Starting search from random node: {start_node}")
 elif choice == '2':
-    # Print available vertex options
-    print("The vertex options are:", list(G.nodes))
+    print("The vertex options are:", nodes)  # Sorted node list
     start_node = input("Enter the specific vertex: ")
-    if start_node not in G.nodes:
+    if start_node not in nodes:
         print("Invalid vertex. Please try again.")
         exit()
 else:
     print("Invalid choice.")
     exit()
 
-# Ask which search algorithm to use (DFS or BFS)
+# Ask user which search algorithm to use
 algorithm_choice = input("1. Depth-First Search (DFS) 2. Breadth-First Search (BFS): ")
+search_type = input("1. Original (single region) 2. Modified (search all disconnected regions): ")
 
-# Function for Depth-First Search (DFS) - Handles disjointed regions
-def depth_first_search(graph, start):
+# Original DFS (searches from a single node)
+def original_dfs(graph, start, visited=None):
+    if visited is None:
+        visited = set()
+
+    visited.add(start)
+    print(start, end=" ")
+
+    for neighbor in sorted(graph[start]):  # Sort neighbors for consistent order
+        if neighbor not in visited:
+            original_dfs(graph, neighbor, visited)
+
+# Original BFS (searches from a single node)
+def original_bfs(graph, start):
+    visited = set()
+    queue = deque([start])
+
+    while queue:
+        node = queue.popleft()
+        if node not in visited:
+            visited.add(node)
+            print(node, end=" ")
+            queue.extend(sorted(neighbor for neighbor in graph[node] if neighbor not in visited))  # Sort for consistency
+
+# Modified DFS (searches all disconnected regions)
+def modified_dfs(graph):
     visited = set()
 
     def dfs(node):
         visited.add(node)
         print(node, end=" ")
-        for neighbor in graph[node]:
+        for neighbor in sorted(graph[node]):
             if neighbor not in visited:
                 dfs(neighbor)
 
-    # Ensure all disconnected components are searched
-    for node in graph.nodes:
+    for node in nodes:  # Sorted order
         if node not in visited:
             dfs(node)
 
-# Function for Breadth-First Search (BFS) - Handles disjointed regions
-def breadth_first_search(graph, start):
+# Modified BFS (searches all disconnected regions)
+def modified_bfs(graph):
     visited = set()
 
     def bfs(start_node):
@@ -74,10 +96,9 @@ def breadth_first_search(graph, start):
             if node not in visited:
                 visited.add(node)
                 print(node, end=" ")
-                queue.extend(neighbor for neighbor in graph[node] if neighbor not in visited)
+                queue.extend(sorted(neighbor for neighbor in graph[node] if neighbor not in visited))  # Sort for consistency
 
-    # Ensure all disconnected components are searched
-    for node in graph.nodes:
+    for node in nodes:  # Sorted order
         if node not in visited:
             bfs(node)
 
@@ -87,16 +108,16 @@ def dfs_path_exists(graph, start, target, visited=None):
         visited = set()
     
     if start == target:
-        return True  # Found the target
-    
+        return True  
+
     visited.add(start)
 
-    for neighbor in graph[start]:
+    for neighbor in sorted(graph[start]):  # Sort neighbors for consistent order
         if neighbor not in visited:
             if dfs_path_exists(graph, neighbor, target, visited):
-                return True  # Path found
+                return True  
 
-    return False  # No path found
+    return False  
 
 # Function to check if a path exists using BFS
 def bfs_path_exists(graph, start, target):
@@ -107,30 +128,43 @@ def bfs_path_exists(graph, start, target):
         node = queue.popleft()
         
         if node == target:
-            return True  # Found the target
+            return True  
         
         if node not in visited:
             visited.add(node)
-            queue.extend(neighbor for neighbor in graph[node] if neighbor not in visited)
+            queue.extend(sorted(neighbor for neighbor in graph[node] if neighbor not in visited))  # Sort for consistency
 
-    return False  # No path found
+    return False  
 
 # Perform the search based on user choice
 if algorithm_choice == '1':
     print("\nPerforming Depth-First Search (DFS):")
-    depth_first_search(G, start_node)
+    if search_type == '1':
+        original_dfs(G, start_node)
+    elif search_type == '2':
+        modified_dfs(G)
+    else:
+        print("Invalid search type choice.")
+        exit()
 elif algorithm_choice == '2':
     print("\nPerforming Breadth-First Search (BFS):")
-    breadth_first_search(G, start_node)
+    if search_type == '1':
+        original_bfs(G, start_node)
+    elif search_type == '2':
+        modified_bfs(G)
+    else:
+        print("Invalid search type choice.")
+        exit()
 else:
     print("Invalid choice for search algorithm.")
     exit()
 
 # Check if a path exists between two given nodes
+print("\nThe vertex options are:", nodes)  # Ensure consistent ordering when displaying nodes again
 source = input("\nEnter the source node to check for a path: ")
 destination = input("Enter the destination node: ")
 
-if source in G.nodes and destination in G.nodes:
+if source in nodes and destination in nodes:
     dfs_result = dfs_path_exists(G, source, destination)
     bfs_result = bfs_path_exists(G, source, destination)
 
@@ -144,4 +178,4 @@ plt.figure(figsize=(6, 6))
 nx.draw(G, pos, with_labels=True, node_color='lightblue', edge_color='gray', node_size=2000, font_size=12)
 plt.show(block=False)
 
-plt.pause(10)   
+plt.pause(10)
