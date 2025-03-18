@@ -5,6 +5,7 @@ from collections import deque  # For BFS
 
 # Create an empty graph
 G = nx.Graph()
+
 # Add nodes
 nodes = set(["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"])
 G.add_nodes_from(nodes)
@@ -74,19 +75,63 @@ def breadth_first_search(graph, start):
                 if neighbor not in visited:
                     queue.append(neighbor)
 
-# Initialize visited nodes set
-visited_nodes = set()
+# Function to check if a path exists using DFS
+def dfs_path_exists(graph, start, target, visited=None):
+    if visited is None:
+        visited = set()
+    
+    if start == target:
+        return True  # Found the target
+    
+    visited.add(start)
+
+    for neighbor in graph[start]:
+        if neighbor not in visited:
+            if dfs_path_exists(graph, neighbor, target, visited):
+                return True  # Path found
+
+    return False  # No path found
+
+# Function to check if a path exists using BFS
+def bfs_path_exists(graph, start, target):
+    visited = set()
+    queue = deque([start])
+
+    while queue:
+        node = queue.popleft()
+        
+        if node == target:
+            return True  # Found the target
+        
+        if node not in visited:
+            visited.add(node)
+            queue.extend(neighbor for neighbor in graph[node] if neighbor not in visited)
+
+    return False  # No path found
 
 # Perform the search based on user choice
 if algorithm_choice == '1':
-    print("Performing Depth-First Search (DFS):")
+    print("\nPerforming Depth-First Search (DFS):")
     depth_first_search(G, start_node)
 elif algorithm_choice == '2':
-    print("Performing Breadth-First Search (BFS):")
+    print("\nPerforming Breadth-First Search (BFS):")
     breadth_first_search(G, start_node)
 else:
     print("Invalid choice for search algorithm.")
     exit()
+
+# Check if a path exists between two given nodes
+source = input("\nEnter the source node to check for a path: ")
+destination = input("Enter the destination node: ")
+
+if source in G.nodes and destination in G.nodes:
+    dfs_result = dfs_path_exists(G, source, destination)
+    bfs_result = bfs_path_exists(G, source, destination)
+
+    print(f"\nPath exists (DFS): {dfs_result}")
+    print(f"Path exists (BFS): {bfs_result}")
+else:
+    print("Invalid nodes. Please enter valid nodes from the graph.")
 
 # Draw the graph
 plt.figure(figsize=(6, 6))
